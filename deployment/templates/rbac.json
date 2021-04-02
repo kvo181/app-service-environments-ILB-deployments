@@ -13,11 +13,12 @@
         }
     },
     "variables": {
+        "keyVaultName": "[if(endsWith(parameters('keyVaultName'), '\r'),substring(parameters('keyVaultName'),0,sub(length(parameters('keyVaultName')),1)),parameters('keyVaultName'))]"
     },
     "resources": [
         {
             "type": "Microsoft.KeyVault/vaults/accessPolicies",
-            "name": "[concat(parameters('keyVaultName'), '/add')]",
+            "name": "[concat(variables('keyVaultName'), '/add')]",
             "apiVersion": "2018-02-14",
             "properties": {
                 "accessPolicies": [

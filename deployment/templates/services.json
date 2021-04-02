@@ -48,6 +48,7 @@
     }
   },
   "variables": {
+    "vnetName": "[if(endsWith(parameters('vnetName'), '\r'),substring(parameters('vnetName'),0,sub(length(parameters('vnetName')),1)),parameters('vnetName'))]",
     "cosmosName": "[concat('votingcosmos-',uniqueString(resourceGroup().id))]",
     "cosmosDatabaseName": "cacheDB",
     "cosmosContainerName": "cacheContainer",
@@ -83,7 +84,7 @@
             "name": "virtualNetworkRules",
             "count": "[length(variables('allowedSubnetNamesArray'))]",
             "input": {
-              "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), variables('allowedSubnetNamesArray')[copyIndex('virtualNetworkRules')])]"
+              "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('allowedSubnetNamesArray')[copyIndex('virtualNetworkRules')])]"
             }
           }
         ],
@@ -210,7 +211,7 @@
         "[resourceId('Microsoft.Sql/servers', variables('sqlServerName'))]"
       ],
       "properties": {
-        "virtualNetworkSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), variables('allowedSubnetNamesArray')[copyIndex()])]"
+        "virtualNetworkSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('allowedSubnetNamesArray')[copyIndex()])]"
       },
       "copy": {
         "name": "sqlVirtualNetworkRuleCopy",
@@ -237,7 +238,7 @@
               "name": "virtualNetworkRules",
               "count": "[length(variables('allowedSubnetNamesArray'))]",
               "input": {
-                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), variables('allowedSubnetNamesArray')[copyIndex('virtualNetworkRules')])]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('allowedSubnetNamesArray')[copyIndex('virtualNetworkRules')])]"
               }
             }
           ]
@@ -355,7 +356,7 @@
         "[resourceId('Microsoft.ServiceBus/namespaces', variables('serviceBusName'))]"
       ],
       "properties": {
-        "virtualNetworkSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), variables('allowedSubnetNamesArray')[copyIndex()])]"
+        "virtualNetworkSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('allowedSubnetNamesArray')[copyIndex()])]"
       },
       "copy": {
         "name": "sbVirtualNetworkRuleCopy",

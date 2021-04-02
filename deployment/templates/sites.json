@@ -66,11 +66,17 @@
     }
   },
   "variables": {
+    "vnetName": "[if(endsWith(parameters('vnetName'), '\r'),substring(parameters('vnetName'),0,sub(length(parameters('vnetName')),1)),parameters('vnetName'))]",
+    "aseName": "[if(endsWith(parameters('aseName'), '\r'),substring(parameters('aseName'),0,sub(length(parameters('aseName')),1)),parameters('aseName'))]",
+    "aseDnsSuffix": "[if(endsWith(parameters('aseDnsSuffix'), '\r'),substring(parameters('aseDnsSuffix'),0,sub(length(parameters('aseDnsSuffix')),1)),parameters('aseDnsSuffix'))]",
+    "keyVaultName": "[if(endsWith(parameters('keyVaultName'), '\r'),substring(parameters('keyVaultName'),0,sub(length(parameters('keyVaultName')),1)),parameters('keyVaultName'))]",
+    "sqlServerName": "[if(endsWith(parameters('sqlServerName'), '\r'),substring(parameters('sqlServerName'),0,sub(length(parameters('sqlServerName')),1)),parameters('sqlServerName'))]",
+    "cosmosDbName": "[if(endsWith(parameters('cosmosDbName'), '\r'),substring(parameters('cosmosDbName'),0,sub(length(parameters('cosmosDbName')),1)),parameters('cosmosDbName'))]",
     "instanceIndex": "[if(empty(parameters('zone')),'0',parameters('zone'))]",
     "redisName": "[concat('REDIS-', uniqueString(resourceGroup().id), '-', variables('instanceIndex'))]",
     "redisSubnetName": "[concat('redis-subnet-', uniqueString(resourceGroup().id), '-', variables('instanceIndex'))]",
-    "redisSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), variables('redisSubnetName'))]",
-    "redisNSGName": "[concat(parameters('vnetName'), '-REDIS-', variables('instanceIndex'), '-NSG')]",
+    "redisSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('redisSubnetName'))]",
+    "redisNSGName": "[concat(variables('vnetName'), '-REDIS-', variables('instanceIndex'), '-NSG')]",
     "redisSecretName": "[concat('RedisConnectionString', variables('instanceIndex'))]",
     "cosmosKeySecretName": "CosmosKey",
     "serviceBusListenerConnectionStringSecretName": "ServiceBusListenerConnectionString",
@@ -83,7 +89,8 @@
     "votingWebPlanName": "[concat(variables('votingWebName'), '-plan')]",
     "testWebPlanName": "[concat(variables('testWebName'), '-plan')]",
     "votingFunctionPlanName": "[concat(variables('votingFunctionName'), '-plan')]",
-    "aseId": "[resourceId('Microsoft.Web/hostingEnvironments', parameters('aseName'))]"
+    "votingFunctionStorageAccountName": "[toLower(concat('votingfuncapp', uniqueString(resourceGroup().id)))]",
+    "aseId": "[resourceId('Microsoft.Web/hostingEnvironments', variables('aseName'))]"
   },
   "resources": [
     {
@@ -201,7 +208,7 @@
     {
       "apiVersion": "2018-04-01",
       "type": "Microsoft.Network/virtualNetworks/subnets",
-      "name": "[concat(parameters('vnetName'), '/', variables('redisSubnetName'))]",
+      "name": "[concat(variables('vnetName'), '/', variables('redisSubnetName'))]",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('redisNSGName'))]"
@@ -237,7 +244,7 @@
     },
     {
       "type": "Microsoft.KeyVault/vaults/secrets",
-      "name": "[concat(parameters('keyVaultName'), '/', variables('redisSecretName'))]",
+      "name": "[concat(variables('keyVaultName'), '/', variables('redisSecretName'))]",
       "apiVersion": "2015-06-01",
       "dependsOn": [
         "[resourceId('Microsoft.Cache/Redis', variables('redisName'))]"
@@ -310,7 +317,7 @@
         "reserved": false,
         "targetWorkerCount": 0,
         "targetWorkerSizeId": 0,
-        "hostingEnvironment": "[parameters('aseName')]"
+        "hostingEnvironment": "[variables('aseName')]"
       }
     },
     {
@@ -329,7 +336,7 @@
         "reserved": false,
         "targetWorkerCount": 0,
         "targetWorkerSizeId": 0,
-        "hostingEnvironment": "[parameters('aseName')]"
+        "hostingEnvironment": "[variables('aseName')]"
       }
     },
     {
@@ -348,7 +355,7 @@
         "reserved": false,
         "targetWorkerCount": 0,
         "targetWorkerSizeId": 0,
-        "hostingEnvironment": "[parameters('aseName')]"
+        "hostingEnvironment": "[variables('aseName')]"
       }
     },
     {
@@ -367,7 +374,7 @@
         "reserved": false,
         "targetWorkerCount": 0,
         "targetWorkerSizeId": 0,
-        "hostingEnvironment": "[parameters('aseName')]"
+        "hostingEnvironment": "[variables('aseName')]"
       }
     },
     {
@@ -377,7 +384,8 @@
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Web/serverfarms', variables('votingFunctionPlanName'))]",
-        "[resourceId('Microsoft.Insights/components', variables('votingFunctionName'))]"
+        "[resourceId('Microsoft.Insights/components', variables('votingFunctionName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('votingFunctionStorageAccountName'))]"
       ],
       "kind": "functionapp",
       "identity": {
@@ -408,12 +416,24 @@
               "value": "[concat('InstrumentationKey=', reference(resourceId('Microsoft.Insights/components', variables('votingFunctionName')), '2014-04-01').InstrumentationKey)]"
             },
             {
+              "name": "AzureWebJobsStorage",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('votingFunctionStorageAccountName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('votingFunctionStorageAccountName')), '2019-06-01').keys[0].value,';EndpointSuffix=','core.windows.net')]"
+            },
+            {
+              "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('votingFunctionStorageAccountName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('votingFunctionStorageAccountName')), '2019-06-01').keys[0].value,';EndpointSuffix=','core.windows.net')]"
+            },
+            {
+              "name": "WEBSITE_CONTENTSHARE",
+              "value": "[concat(toLower(variables('votingFunctionName')), '82de')]"
+            },
+            {
               "name": "SERVICEBUS_CONNECTION_STRING",
-              "value": "[concat('@Microsoft.KeyVault(SecretUri=', reference(resourceId('Microsoft.KeyVault/vaults/secrets', parameters('keyVaultName'), variables('serviceBusListenerConnectionStringSecretName')), '2016-10-01').secretUriWithVersion, ')')]"
+              "value": "[concat('@Microsoft.KeyVault(SecretUri=', reference(resourceId('Microsoft.KeyVault/vaults/secrets', variables('keyVaultName'), variables('serviceBusListenerConnectionStringSecretName')), '2016-10-01').secretUriWithVersion, ')')]"
             },
             {
               "name": "sqldb_connection",
-              "value": "[concat('Server=', reference(resourceId('Microsoft.Sql/servers', parameters('sqlServerName')), '2015-05-01-preview').fullyQualifiedDomainName, ',1433;Database=', parameters('sqlDatabaseName'), ';')]"
+              "value": "[concat('Server=', reference(resourceId('Microsoft.Sql/servers', variables('sqlServerName')), '2015-05-01-preview').fullyQualifiedDomainName, ',1433;Database=', parameters('sqlDatabaseName'), ';')]"
             }
           ]
         }
@@ -449,7 +469,7 @@
             },
             {
               "name": "ConnectionStrings:SqlDbConnection",
-              "value": "[concat('Server=', reference(resourceId('Microsoft.Sql/servers', parameters('sqlServerName')), '2015-05-01-preview').fullyQualifiedDomainName, ',1433;Database=', parameters('sqlDatabaseName'), ';')]"
+              "value": "[concat('Server=', reference(resourceId('Microsoft.Sql/servers', variables('sqlServerName')), '2015-05-01-preview').fullyQualifiedDomainName, ',1433;Database=', parameters('sqlDatabaseName'), ';')]"
             }
           ]
         }
@@ -482,7 +502,7 @@
             },
             {
               "name": "ConnectionStrings:sbConnectionString",
-              "value": "[concat('@Microsoft.KeyVault(SecretUri=', reference(resourceId('Microsoft.KeyVault/vaults/secrets', parameters('keyVaultName'), variables('serviceBusSenderConnectionStringSecretName')), '2016-10-01').secretUriWithVersion, ')')]"
+              "value": "[concat('@Microsoft.KeyVault(SecretUri=', reference(resourceId('Microsoft.KeyVault/vaults/secrets', variables('keyVaultName'), variables('serviceBusSenderConnectionStringSecretName')), '2016-10-01').secretUriWithVersion, ')')]"
             },
             {
               "name": "ConnectionStrings:VotingDataAPIBaseUri",
@@ -494,7 +514,7 @@
             },
             {
               "name": "ConnectionStrings:RedisConnectionString",
-              "value": "[concat('@Microsoft.KeyVault(SecretUri=', reference(resourceId('Microsoft.KeyVault/vaults/secrets', parameters('keyVaultName'), variables('redisSecretName')), '2016-10-01').secretUriWithVersion, ')')]"
+              "value": "[concat('@Microsoft.KeyVault(SecretUri=', reference(resourceId('Microsoft.KeyVault/vaults/secrets', variables('keyVaultName'), variables('redisSecretName')), '2016-10-01').secretUriWithVersion, ')')]"
             },
             {
               "name": "ConnectionStrings:queueName",
@@ -502,11 +522,11 @@
             },
             {
               "name": "ConnectionStrings:CosmosUri",
-              "value": "[reference(resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmosDbName')),'2019-12-12').documentEndpoint]"
+              "value": "[reference(resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmosDbName')),'2019-12-12').documentEndpoint]"
             },
             {
               "name": "ConnectionStrings:CosmosKey",
-              "value": "[concat('@Microsoft.KeyVault(SecretUri=', reference(resourceId('Microsoft.KeyVault/vaults/secrets', parameters('keyVaultName'), variables('cosmosKeySecretName')), '2016-10-01').secretUriWithVersion, ')')]"
+              "value": "[concat('@Microsoft.KeyVault(SecretUri=', reference(resourceId('Microsoft.KeyVault/vaults/secrets', variables('keyVaultName'), variables('cosmosKeySecretName')), '2016-10-01').secretUriWithVersion, ')')]"
             }
           ]
         }
@@ -543,6 +563,20 @@
           ]
         }
       }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2019-06-01",
+      "name": "[variables('votingFunctionStorageAccountName')]",
+      "location": "[parameters('location')]",
+      "tags": {},
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "properties": {
+        "supportsHttpsTrafficOnly": true,
+        "minimumTlsVersion": "TLS1_2"
+      }
     }
 
   ],
@@ -568,11 +602,11 @@
       "type": "string"
     },
     "votingAppUrl": {
-      "value": "[concat(variables('votingWebName'), '.', parameters('aseDnsSuffix'))]",
+      "value": "[concat(variables('votingWebName'), '.', variables('aseDnsSuffix'))]",
       "type": "string"
     },
     "testAppUrl": {
-      "value": "[concat(variables('testWebName'), '.', parameters('aseDnsSuffix'))]",
+      "value": "[concat(variables('testWebName'), '.', variables('aseDnsSuffix'))]",
       "type": "string"
     },
     "votingApiName": {

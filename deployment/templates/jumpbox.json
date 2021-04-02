@@ -35,10 +35,11 @@
     }
   },
   "variables": {
+    "vnetName": "[if(endsWith(parameters('vnetName'), '\r'),substring(parameters('vnetName'),0,sub(length(parameters('vnetName')),1)),parameters('vnetName'))]",
     "computerName": "votingjb",
     "jumpboxName": "[concat('jumpbox-', variables('computerName'), uniqueString(resourceGroup().id))]",
     "jumpboxSubnetName": "[concat('jumpbox-subnet-', uniqueString(resourceGroup().id))]",
-    "jumpboxSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), variables('jumpboxSubnetName'))]",
+    "jumpboxSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('jumpboxSubnetName'))]",
     "jumpboxPublicIpName": "[concat('jumpbox-pip-', uniqueString(resourceGroup().id))]",
     "jumpboxNSGName": "[concat(parameters('vnetName'),'-JUMPBOX-NSG')]",
     "jumpboxNicName": "[concat('jumpbox-nic-', uniqueString(resourceGroup().id))]"
@@ -88,7 +89,7 @@
     {
       "type": "Microsoft.Network/virtualNetworks/subnets",
       "apiVersion": "2019-11-01",
-      "name": "[concat(parameters('vnetName'), '/', variables('jumpboxSubnetName'))]",
+      "name": "[concat(variables('vnetName'), '/', variables('jumpboxSubnetName'))]",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkSecurityGroups', variables('jumpboxNSGName'))]"

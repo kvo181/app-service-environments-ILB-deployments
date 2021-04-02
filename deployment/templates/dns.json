@@ -22,7 +22,8 @@
     }
   },
   "variables": {
-    "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+    "vnetName": "[if(endsWith(parameters('vnetName'), '\r'),substring(parameters('vnetName'),0,sub(length(parameters('vnetName')),1)),parameters('vnetName'))]",
+    "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
   },
   "resources": [
     {

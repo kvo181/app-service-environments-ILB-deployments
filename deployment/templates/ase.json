@@ -36,12 +36,14 @@
     }
   },
   "variables": {
+    "vnetName": "[if(endsWith(parameters('vnetName'), '\r'),substring(parameters('vnetName'),0,sub(length(parameters('vnetName')),1)),parameters('vnetName'))]",
+    "vnetRouteName": "[if(endsWith(parameters('vnetRouteName'), '\r'),substring(parameters('vnetRouteName'),0,sub(length(parameters('vnetRouteName')),1)),parameters('vnetRouteName'))]",
     "instanceIndex": "[if(empty(parameters('zone')),'0',parameters('zone'))]",
     "aseName": "[concat('ASE-', uniqueString(resourceGroup().id), '-', variables('instanceIndex'))]",
-    "aseNSGName": "[concat(parameters('vnetName'),'-ASE-', variables('instanceIndex'), '-NSG')]",
+    "aseNSGName": "[concat(variables('vnetName'),'-ASE-', variables('instanceIndex'), '-NSG')]",
     "aseId": "[resourceId('Microsoft.Web/hostingEnvironments', variables('aseName'))]",
     "aseSubnetName": "[concat('ase-subnet-', variables('aseName'))]",
-    "aseSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), variables('aseSubnetName'))]",
+    "aseSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('aseSubnetName'))]",
     "aseLoadBalancingMode": 3
   },
   "resources": [
@@ -240,7 +242,7 @@
     {
       "type": "Microsoft.Network/virtualNetworks/subnets",
       "apiVersion": "2019-11-01",
-      "name": "[concat(parameters('vnetName'), '/', variables('aseSubnetName'))]",
+      "name": "[concat(variables('vnetName'), '/', variables('aseSubnetName'))]",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('aseNSGName'))]"
@@ -251,7 +253,7 @@
           "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('aseNSGName'))]"
         },
         "routeTable": {
-          "id": "[resourceId('Microsoft.Network/routeTables', parameters('vnetRouteName'))]"
+          "id": "[resourceId('Microsoft.Network/routeTables', variables('vnetRouteName'))]"
         },
         "serviceEndpoints": [
           {

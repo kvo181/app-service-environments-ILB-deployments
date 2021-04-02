@@ -1,0 +1,54 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vNet": {
+      "value": {
+        "resourceGroup": "rg-euw-h1s10-network",
+        "name": "vnet-euw-h1s10",
+        "asesubnet": {
+          "name": "snet-euw-h1s10-ase01",
+          "addressPrefix": "10.246.43.0/26",
+          "routeName": "udr-vnet-euw-h1s10-AseDefault"
+        }
+      }
+    },
+    "aseNSGName": {
+      "value": "nsg-vnet-euw-h1s10-ase01"
+    },
+    "appServiceEnvironmentName": {
+      "value": "ase-euw-h1s10-asetestapp"
+    },
+    "appServicePlanName": {
+      "value": "aspwin-euw-h1s10-asetestapp"
+    },
+    "siteName": {
+      "value": "as-win-euw-h1s10-asetestapp"
+    },
+    "pricingTier": {
+      "value": "1"
+    },
+    "capacity": {
+      "value": 1
+    },
+    "agwName": {
+        "value": "ag-euw-h1s10-asetestapp"
+    },
+    "agwPublicIpAddressName": {
+      "value": "pip-ag-euw-h1s10-asetestapp"
+    },
+    "agwNSGName": {
+        "value": "nsg-vnet-euw-h1s10-agw"
+    },
+    "agwVNet": {
+      "value": {
+        "resourceGroup": "rg-euw-h1s10-network",
+        "name": "vnet-euw-h1s10",
+        "subnet": {
+          "name": "snet-euw-h1s10-appgateway01",
+          "addressPrefix": "10.246.40.32/28" 
+        }
+      }
+    }
+  }
+}

@@ -36,11 +36,12 @@
     }
   },
   "variables": {
+    "vnetName": "[if(endsWith(parameters('vnetName'), '\r'),substring(parameters('vnetName'),0,sub(length(parameters('vnetName')),1)),parameters('vnetName'))]",
     "appgwName": "appgw",
     "appgwId": "[resourceId('Microsoft.Network/applicationGateways', variables('appgwName'))]",
     "appgwSubnetName": "[concat('appgw-subnet-', variables('appgwName'))]",
-    "appgwSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), variables('appgwSubnetName'))]",
-    "appgwNSGName": "[concat(parameters('vnetName'),'-APPGW-NSG')]",
+    "appgwSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('appgwSubnetName'))]",
+    "appgwNSGName": "[concat(variables('vnetName'),'-APPGW-NSG')]",
     "appgwPublicIpAddressName": "AppGatewayIp",
     "appGwPublicIpAddressId": "[resourceId('Microsoft.Network/publicIPAddresses', variables('appgwPublicIpAddressName'))]",
     "appgwIpConfigName": "[concat(variables('appgwName'), '-ipconfig')]",
@@ -131,7 +132,7 @@
     {
       "type": "Microsoft.Network/virtualNetworks/subnets",
       "apiVersion": "2019-11-01",
-      "name": "[concat(parameters('vnetName'), '/', variables('appgwSubnetName'))]",
+      "name": "[concat(variables('vnetName'), '/', variables('appgwSubnetName'))]",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkSecurityGroups', variables('appgwNSGName'))]"
